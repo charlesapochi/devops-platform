@@ -28,7 +28,15 @@ jobs:
           cd services/auth-service
           npm run test --if-present
 
-      - name: Build Docker images
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Build and push Auth Service
         run: |
-          docker build -t auth-service ./services/auth-service
-          docker build -t api-gateway ./services/api-gateway
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-service ./services/auth-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/auth-service
+
+      - name: Build and push API Gateway
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/api-gateway ./services/api-gateway
+          docker push ${{ secrets.DOCKER_USERNAME }}/api-gateway

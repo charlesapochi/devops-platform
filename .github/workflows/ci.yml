@@ -1,0 +1,34 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies (Auth Service)
+        run: |
+          cd services/auth-service
+          npm install
+
+      - name: Run tests (Auth Service)
+        run: |
+          cd services/auth-service
+          npm run test --if-present
+
+      - name: Build Docker images
+        run: |
+          docker build -t auth-service ./services/auth-service
+          docker build -t api-gateway ./services/api-gateway

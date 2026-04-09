@@ -33,10 +33,10 @@ jobs:
 
       - name: Build and push Auth Service
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-service ./services/auth-service
-          docker push ${{ secrets.DOCKER_USERNAME }}/auth-service
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }} ./services/auth-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
 
       - name: Build and push API Gateway
         run: |
-          docker build -t ${{ secrets.DOCKER_USERNAME }}/api-gateway ./services/api-gateway
-          docker push ${{ secrets.DOCKER_USERNAME }}/api-gateway
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.sha }} ./services/api-gateway
+          docker push ${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.sha }}

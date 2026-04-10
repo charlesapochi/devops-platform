@@ -1,0 +1,73 @@
+name: Full CI/CD Pipeline
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Checkout
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup Node
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      # 3. Install + Test Auth Service
+      - name: Install dependencies (Auth Service)
+        run: |
+          cd services/auth-service
+          npm install
+
+      - name: Run tests (Auth Service)
+        run: |
+          cd services/auth-service
+          npm run test --if-present
+
+      # 4. Docker Login
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      # 5. Build & Push Auth Service
+      - name: Build and push Auth Service
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }} ./services/auth-service
+          docker push ${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
+
+      # 6. Build & Push API Gateway
+      - name: Build and push API Gateway
+        run: |
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.sha }} ./services/api-gateway
+          docker push ${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.sha }}
+
+      # 7. Setup kubectl
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+
+      # 8. Set kubeconfig
+      - name: Configure kubeconfig
+        run: |
+          echo "${{ secrets.KUBE_CONFIG }}" > kubeconfig.yaml
+          export KUBECONFIG=$PWD/kubeconfig.yaml
+
+      # 9. Deploy using new image tag
+      - name: Update Kubernetes Deployments
+        run: |
+          kubectl set image deployment/auth-service \
+            auth-service=${{ secrets.DOCKER_USERNAME }}/auth-service:${{ github.sha }}
+
+          kubectl set image deployment/api-gateway \
+            api-gateway=${{ secrets.DOCKER_USERNAME }}/api-gateway:${{ github.sha }}
+
+      # 10. Wait for rollout
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/auth-service
+          kubectl rollout status deployment/api-gateway

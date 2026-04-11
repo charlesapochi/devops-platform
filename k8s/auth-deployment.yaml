@@ -20,14 +20,20 @@ spec:
             - containerPort: 3000
           env:
             - name: DB_HOST
-              value: postgres
+              value: "postgres"
             - name: DB_PORT
               value: "5432"
             - name: DB_USER
-              value: postgres
-            - name: DB_PASS
-              value: postgres
+              value: "postgres"
             - name: DB_NAME
-              value: auth_db
+              value: "auth_db"
+            - name: DB_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: DB_PASS
             - name: JWT_SECRET
-              value: supersecret
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: JWT_SECRET

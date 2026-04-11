@@ -20,4 +20,7 @@ spec:
             - containerPort: 8080
           env:
             - name: JWT_SECRET
-              value: supersecret
+              valueFrom:
+                secretKeyRef:
+                  name: auth-secrets
+                  key: JWT_SECRET
